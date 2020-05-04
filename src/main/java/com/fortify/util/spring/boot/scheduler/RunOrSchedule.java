@@ -45,14 +45,18 @@ public class RunOrSchedule implements CommandLineRunner {
 
 	private void runOnce(List<ISchedulableRunner> runners) {
 		for ( ISchedulableRunner runner : runners ) {
-			runner.run();
+			if ( runner.isEnabled() ) {
+				runner.run();
+			}
 		}
 		SpringApplication.exit(context);
 	}
 	
 	private void schedule(List<ISchedulableRunner> runners) {
 		for ( ISchedulableRunner runner : runners ) {
-			scheduler.schedule(runner, new CronTrigger(runner.getCronSchedule()));
+			if ( runner.isEnabled() && hasSchedule(runner) ) {
+				scheduler.schedule(runner, new CronTrigger(runner.getCronSchedule()));
+			}
 		}
 	}
 	

@@ -25,5 +25,6 @@ package com.fortify.util.spring.boot.scheduler;
  ******************************************************************************/
 
 public interface ISchedulableRunner extends Runnable {
+	public boolean isEnabled();
 	public String getCronSchedule();
 }
