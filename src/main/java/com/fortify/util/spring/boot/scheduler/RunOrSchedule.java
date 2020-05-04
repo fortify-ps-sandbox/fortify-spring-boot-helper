@@ -23,6 +23,7 @@ public class RunOrSchedule implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
+		// TODO Check if there are any enabled runners, throw exception otherwise
 		if ( runners==null || runners.isEmpty() ) {
 			throw new RuntimeException("No runners found");
 		} else {
