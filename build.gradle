@@ -1,0 +1,90 @@
+plugins {
+	id 'java-library'
+    id 'maven-publish'
+    id 'base'
+    id 'com.jfrog.bintray' version "1.8.4"
+    id 'com.jfrog.artifactory' version "4.10.0"
+    id 'org.ajoberstar.grgit' version "4.0.0"
+}
+
+ext {
+	gradleHelpersLocation = "https://raw.githubusercontent.com/fortify-ps/gradle-helpers/1.2"
+}
+
+apply from: "${gradleHelpersLocation}/repo-helper.gradle"
+apply from: "${gradleHelpersLocation}/version-helper.gradle"
+apply from: "${gradleHelpersLocation}/upload-mvn-helper.gradle"
+apply from: "${gradleHelpersLocation}/fortify-helper.gradle"
+
+group = 'com.fortify.util.spring.boot'
+version = getProjectVersion()
+description = 'Fortify Spring Boot helper classes'
+
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+test {
+	useJUnitPlatform()
+}
+
+dependencies {
+	api 'org.springframework.boot:spring-boot-starter-quartz:2.2.1.RELEASE'
+	implementation 'commons-lang:commons-lang:2.6'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+}
+
+task sourcesJar(type: Jar) {
+	from sourceSets.main.allJava
+	archiveClassifier = 'sources'
+}
+	
+task myjavadoc(type: Javadoc) {
+	source = sourceSets.main.allJava
+	classpath = sourceSets.main.compileClasspath
+	failOnError = false
+}
+	
+task javadocJar(type: Jar) {
+	from myjavadoc
+	archiveClassifier = 'javadoc'
+}
+	
+publishing {
+	publications {
+	    mavenJava(MavenPublication) {
+	        from components.java
+	        artifact sourcesJar
+	        artifact javadocJar
+	        pom {
+	            version = project.version
+	            name = project.name
+	            afterEvaluate {
+	                description = project.description
+	            }
+	            url = "https://github.com/fortify-ps/${rootProject.name}"
+	            licenses {
+	                license {
+	                    name = 'MIT License'
+	                    url = 'https://opensource.org/licenses/MIT'
+	                }
+	            }
+	            developers {
+	                developer {
+	                    id = 'rsenden'
+	                    name = 'Ruud Senden'
+	                    email = 'ruud.senden@microfocus.com'
+	                }
+	            }
+	            scm {
+	                developerConnection = "scm:git:https://github.com/fortify-ps/${rootProject.name}.git"
+	            }
+	        }
+	    }
+	}
+}
+// Publish to Maven local repository when publish task is executed
+publish.finalizedBy publishToMavenLocal
+

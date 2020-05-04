@@ -1,0 +1,10 @@
+.project
+.settings/
+.classpath
+.springBeans
+target/
+build/
+bin/
+.gradle
+lombok.config
+*.fpr
