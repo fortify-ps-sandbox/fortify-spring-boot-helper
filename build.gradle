@@ -24,6 +24,7 @@ apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
+
 test {
 	useJUnitPlatform()
 }
@@ -31,8 +32,8 @@ test {
 dependencies {
 	api 'org.springframework.boot:spring-boot-starter-quartz:2.2.1.RELEASE'
 	implementation 'commons-lang:commons-lang:2.6'
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	testImplementation('org.springframework.boot:spring-boot-starter-test:2.2.1.RELEASE') {
+//		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 }
 
