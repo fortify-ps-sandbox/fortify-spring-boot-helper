@@ -26,14 +26,17 @@ package com.fortify.util.spring.boot.env;
 
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.StandardEnvironment;
 
-public final class ModifyablePropertySource extends PropertySource<ThreadLocal<Deque<ModifyablePropertyAttributes>>> implements AutoCloseable {
+public final class ModifyablePropertySource extends EnumerablePropertySource<ThreadLocal<Deque<ModifyablePropertyAttributes>>> implements AutoCloseable {
 	private static final ModifyablePropertySource INSTANCE = new ModifyablePropertySource();
 	
 	public static final ConfigurableEnvironment createEnvironment() {
@@ -47,8 +50,16 @@ public final class ModifyablePropertySource extends PropertySource<ThreadLocal<D
 	}
 	
 	@Override
+	public String[] getPropertyNames() {
+		Deque<ModifyablePropertyAttributes> deque = getDeque();
+		List<String> propertyNames = deque.stream().map(p->p.getProperties().keySet()).flatMap(Set::stream).collect(Collectors.toList());
+		return propertyNames.toArray(new String[] {});
+	}
+	
+	@Override
 	public Object getProperty(String name) {
 		Deque<ModifyablePropertyAttributes> deque = getDeque();
+		// TODO Also look for propertyName if input name is property-name 
 		return deque.stream()
 				.filter(p->p.getProperties().containsKey(name))
 				.findFirst()

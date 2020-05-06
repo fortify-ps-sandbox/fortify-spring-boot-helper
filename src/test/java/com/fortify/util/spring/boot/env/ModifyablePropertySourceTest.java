@@ -26,12 +26,14 @@ package com.fortify.util.spring.boot.env;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,7 +43,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
-import com.fortify.util.spring.boot.env.ModifyablePropertySource;
 import com.fortify.util.spring.boot.env.ModifyablePropertySourceScope.ModifyablePropertySourceScopeBeanFactoryPostProcessor;
 
 // TODO Convert this into proper, separate unit tests
@@ -77,6 +78,12 @@ public final class ModifyablePropertySourceTest {
 			test(()->ctx.getBean("testConfigSingleton", TestConfig.class), i->getInitialValue(), true);
 			test(()->ctx.getBean("testConfigPrototype", TestConfig.class), this::getValue, false);
 			test(()->ctx.getBean("testConfigModifyableProperties", TestConfig.class), this::getValue, true);
+			for ( int i = 0 ; i < 5 ; i++ ) {
+				try (ModifyablePropertySource x = ModifyablePropertySource.withProperties(getProperties(i))) {
+					Object o = ctx.getBean("testConfigModifyablePropertiesConditional");
+					System.out.println("o: "+o);
+				}
+			}
 		}
 		
 		private void test(Supplier<TestConfig> configSupplier, Function<Integer, String> expectedValueSupplier, boolean expectSame) {
@@ -156,10 +163,17 @@ public final class ModifyablePropertySourceTest {
 		}
 		
 		@Bean()
-		@Scope("propertySource")
+		@Scope(ModifyablePropertySourceScope.SCOPE_NAME)
 		@ConfigurationProperties("abc")
 		public TestConfig testConfigModifyableProperties() {
 			return new TestConfig();
+		}
+		
+		@Bean()
+		@Scope(ModifyablePropertySourceScope.SCOPE_NAME)
+		@ConfigurationProperties("abc")
+		public Optional<TestConfig> testConfigModifyablePropertiesConditional(@Value("${abc.value}") String value) {
+			return getValue(3).equals(value) ? Optional.of(new TestConfig()) : Optional.empty();
 		}
 		
 		@Autowired ApplicationContext ctx;

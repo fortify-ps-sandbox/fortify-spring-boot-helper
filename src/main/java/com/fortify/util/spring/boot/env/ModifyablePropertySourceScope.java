@@ -34,6 +34,7 @@ import org.springframework.beans.factory.config.Scope;
 
 // TODO Call destruction callbacks
 public class ModifyablePropertySourceScope implements Scope {
+	public static final String SCOPE_NAME = "propertySource";
 	@Override
 	public Object get(String name, ObjectFactory<?> objectFactory) {
 		Map<String, Object> scopedObjects = getScopedObjects();
@@ -79,7 +80,7 @@ public class ModifyablePropertySourceScope implements Scope {
 	public static final class ModifyablePropertySourceScopeBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 	    @Override
 	    public void postProcessBeanFactory(ConfigurableListableBeanFactory factory) throws BeansException {
-	        factory.registerScope("propertySource", new ModifyablePropertySourceScope());
+	        factory.registerScope(SCOPE_NAME, new ModifyablePropertySourceScope());
 	    }
 	}
 }
