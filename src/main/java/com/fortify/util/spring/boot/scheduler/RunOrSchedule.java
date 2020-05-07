@@ -18,45 +18,45 @@ import org.springframework.stereotype.Component;
 public class RunOrSchedule implements CommandLineRunner {
 	@Value("${runOnce:false}") private boolean runOnce;
 	@Autowired private TaskScheduler scheduler;
-	@Autowired private List<ISchedulableRunner> runners;
+	@Autowired private List<ISchedulableRunnerFactory> runnerFactories;
 	@Autowired ApplicationContext context;
 
 	@Override
 	public void run(String... args) throws Exception {
-		// TODO Check if there are any enabled runners, throw exception otherwise
-		if ( runners==null || runners.isEmpty() ) {
+		// TODO Check if there are any enabled runner factories, throw exception otherwise
+		if ( runnerFactories==null || runnerFactories.isEmpty() ) {
 			throw new RuntimeException("No runners found");
 		} else {
-			if ( isRunOnce(runners) ) {
-				runOnce(runners);
+			if ( isRunOnce(runnerFactories) ) {
+				runOnce(runnerFactories);
 			} else {
-				schedule(runners);
+				schedule(runnerFactories);
 			}
 		}
 	}
 	
-	private boolean isRunOnce(List<ISchedulableRunner> runners) {
+	private boolean isRunOnce(List<ISchedulableRunnerFactory> runners) {
 		return runOnce || !runners.stream().anyMatch(this::hasSchedule);
 	}
 	
-	private boolean hasSchedule(ISchedulableRunner runner) {
-		return StringUtils.isNotBlank(runner.getCronSchedule())
-				&& !"-".equals(runner.getCronSchedule());
+	private boolean hasSchedule(ISchedulableRunnerFactory runnerFactory) {
+		return StringUtils.isNotBlank(runnerFactory.getCronSchedule())
+				&& !"-".equals(runnerFactory.getCronSchedule());
 	}
 
-	private void runOnce(List<ISchedulableRunner> runners) {
-		for ( ISchedulableRunner runner : runners ) {
-			if ( runner.isEnabled() ) {
-				runner.run();
+	private void runOnce(List<ISchedulableRunnerFactory> runnerFactories) {
+		for ( ISchedulableRunnerFactory runnerFactory : runnerFactories ) {
+			if ( runnerFactory.isEnabled() ) {
+				runnerFactory.getRunner().run();
 			}
 		}
 		SpringApplication.exit(context);
 	}
 	
-	private void schedule(List<ISchedulableRunner> runners) {
-		for ( ISchedulableRunner runner : runners ) {
-			if ( runner.isEnabled() && hasSchedule(runner) ) {
-				scheduler.schedule(runner, new CronTrigger(runner.getCronSchedule()));
+	private void schedule(List<ISchedulableRunnerFactory> runnerFactories) {
+		for ( ISchedulableRunnerFactory runnerFactory : runnerFactories ) {
+			if ( runnerFactory.isEnabled() && hasSchedule(runnerFactory) ) {
+				scheduler.schedule(runnerFactory.getRunner(), new CronTrigger(runnerFactory.getCronSchedule()));
 			}
 		}
 	}

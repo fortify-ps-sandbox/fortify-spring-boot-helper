@@ -1,4 +1,3 @@
-package com.fortify.util.spring.boot.scheduler;
 /*******************************************************************************
  * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
@@ -23,6 +22,19 @@ package com.fortify.util.spring.boot.scheduler;
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
+package com.fortify.util.spring.boot.env;
 
-public interface ISchedulableRunner extends Runnable {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Scope;
+
+@Qualifier
+@Scope(ModifyablePropertySourceScope.SCOPE_NAME)
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface PropertyScoped {
 }

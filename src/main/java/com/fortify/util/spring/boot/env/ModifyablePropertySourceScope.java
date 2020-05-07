@@ -32,7 +32,6 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.Scope;
 
-// TODO Call destruction callbacks
 public class ModifyablePropertySourceScope implements Scope {
 	public static final String SCOPE_NAME = "propertySource";
 	@Override
@@ -50,8 +49,8 @@ public class ModifyablePropertySourceScope implements Scope {
 	    return getScopedObjects().remove(name);
 	}
 
-	private ModifyablePropertyAttributes getModifyablePropertyAttributes() {
-		return ModifyablePropertySource.getModifyablePropertyAttributes();
+	private ScopedPropertiesHolder getModifyablePropertyAttributes() {
+		return ModifyablePropertySource.getScopedPropertiesHolder();
 	}
 	
 	private Map<String, Object> getScopedObjects() {

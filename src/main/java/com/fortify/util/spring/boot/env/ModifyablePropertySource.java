@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.util.spring.boot.env;
 
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +37,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.StandardEnvironment;
 
-public final class ModifyablePropertySource extends EnumerablePropertySource<ThreadLocal<Deque<ModifyablePropertyAttributes>>> implements AutoCloseable {
+public final class ModifyablePropertySource extends EnumerablePropertySource<ThreadLocal<Deque<ScopedPropertiesHolder>>> implements AutoCloseable {
 	private static final ModifyablePropertySource INSTANCE = new ModifyablePropertySource();
 	
 	public static final ConfigurableEnvironment createEnvironment() {
@@ -51,40 +52,36 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 	
 	@Override
 	public String[] getPropertyNames() {
-		Deque<ModifyablePropertyAttributes> deque = getDeque();
+		Deque<ScopedPropertiesHolder> deque = getDeque();
 		List<String> propertyNames = deque.stream().map(p->p.getProperties().keySet()).flatMap(Set::stream).collect(Collectors.toList());
 		return propertyNames.toArray(new String[] {});
 	}
 	
 	@Override
 	public Object getProperty(String name) {
-		Deque<ModifyablePropertyAttributes> deque = getDeque();
-		// TODO Also look for propertyName if input name is property-name 
+		Deque<ScopedPropertiesHolder> deque = getDeque();
+		// TODO Support property variations? For example also look for propertyName if input name is property-name 
 		return deque.stream()
 				.filter(p->p.getProperties().containsKey(name))
 				.findFirst()
 				.map(p->p.getProperties().get(name)).orElse(null);
 	}
-	
-	@Override
-	public void close() {
-		Deque<ModifyablePropertyAttributes> deque = getDeque();
-		deque.getFirst().clear();
-		deque.removeFirst();
-	}
 
-	private Deque<ModifyablePropertyAttributes> getDeque() {
-		return getSource().get();
-	}
-	
 	public static final ModifyablePropertySource withProperties(Map<String, Object> properties) {
-		Deque<ModifyablePropertyAttributes> deque = INSTANCE.getDeque();
-		deque.addFirst(new ModifyablePropertyAttributes(properties));
+		Deque<ScopedPropertiesHolder> deque = INSTANCE.getDeque();
+		deque.addFirst(new ScopedPropertiesHolder(properties));
 		return INSTANCE;
 	}
 	
+	@Override
+	public void close() {
+		Deque<ScopedPropertiesHolder> deque = getDeque();
+		deque.getFirst().clear();
+		deque.removeFirst();
+	}
+	
 	public static final <R> R withProperties(Map<String, Object> properties, Callable<R> callable) throws Exception {
-		try (ModifyablePropertySource tlps = withProperties(properties)) {
+		try (ModifyablePropertySource tlps = withProperties(getPropertiesOrDefault(properties))) {
 			return callable.call();
 		}
 	}
@@ -95,12 +92,23 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 		}
 	}
 	
-	static final ModifyablePropertyAttributes getModifyablePropertyAttributes() {
-		ModifyablePropertyAttributes modifyablePropertyAttributes = INSTANCE.getDeque().peekFirst();
-		return modifyablePropertyAttributes==null ? ModifyablePropertyAttributes.DEFAULT : modifyablePropertyAttributes;
+	static final ScopedPropertiesHolder getScopedPropertiesHolder() {
+		return INSTANCE.getDeque().peekFirst();
 	}
 	
-	private static final Deque<ModifyablePropertyAttributes> createPropertiesDeque() {
-		return new LinkedList<>();
+	private Deque<ScopedPropertiesHolder> getDeque() {
+		return getSource().get();
+	}
+	
+	
+	private static final Deque<ScopedPropertiesHolder> createPropertiesDeque() {
+		return new LinkedList<>(Arrays.asList(ScopedPropertiesHolder.DEFAULT));
+	}
+	
+	private static final Map<String, Object> getPropertiesOrDefault(Map<String, Object> properties) {
+		if ( properties==null || properties.size()==0 ) {
+			properties = getScopedPropertiesHolder().getProperties();
+		}
+		return properties;
 	}
 }

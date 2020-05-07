@@ -29,14 +29,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-final class ModifyablePropertyAttributes {
-	static final ModifyablePropertyAttributes DEFAULT = new ModifyablePropertyAttributes(new HashMap<>());
+final class ScopedPropertiesHolder {
+	static final ScopedPropertiesHolder DEFAULT = new ScopedPropertiesHolder(new HashMap<>());
 	private final String id;
 	private final Map<String, Object> scopedObjects = Collections.synchronizedMap(new HashMap<String, Object>());
 	private final Map<String, Runnable> destructionCallbacks = Collections.synchronizedMap(new HashMap<String, Runnable>());
 	private final Map<String, Object> properties;
 	
-	ModifyablePropertyAttributes(Map<String, Object> properties) {
+	ScopedPropertiesHolder(Map<String, Object> properties) {
 		this.id = UUID.randomUUID().toString();
 		this.properties = Collections.synchronizedMap(properties);
 	}
