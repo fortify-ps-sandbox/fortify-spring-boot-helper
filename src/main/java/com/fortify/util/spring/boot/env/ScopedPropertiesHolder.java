@@ -38,7 +38,7 @@ final class ScopedPropertiesHolder {
 	
 	ScopedPropertiesHolder(Map<String, Object> properties) {
 		this.id = UUID.randomUUID().toString();
-		this.properties = Collections.synchronizedMap(properties);
+		this.properties = properties==null?null:Collections.synchronizedMap(properties);
 	}
 
 	public String getId() {

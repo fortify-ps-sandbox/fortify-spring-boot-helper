@@ -69,7 +69,7 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 
 	public static final ModifyablePropertySource withProperties(Map<String, Object> properties) {
 		Deque<ScopedPropertiesHolder> deque = INSTANCE.getDeque();
-		deque.addFirst(new ScopedPropertiesHolder(properties));
+		deque.addFirst(getScopedPropertiesHolder(properties));
 		return INSTANCE;
 	}
 	
@@ -81,7 +81,7 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 	}
 	
 	public static final <R> R withProperties(Map<String, Object> properties, Callable<R> callable) throws Exception {
-		try (ModifyablePropertySource tlps = withProperties(getPropertiesOrDefault(properties))) {
+		try (ModifyablePropertySource tlps = withProperties(properties)) {
 			return callable.call();
 		}
 	}
@@ -105,10 +105,9 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 		return new LinkedList<>(Arrays.asList(ScopedPropertiesHolder.DEFAULT));
 	}
 	
-	private static final Map<String, Object> getPropertiesOrDefault(Map<String, Object> properties) {
-		if ( properties==null || properties.size()==0 ) {
-			properties = getScopedPropertiesHolder().getProperties();
-		}
-		return properties;
+	private static final ScopedPropertiesHolder getScopedPropertiesHolder(Map<String, Object> properties) {
+		return ( properties==null || properties.size()==0 ) 
+			? getScopedPropertiesHolder()
+			: new ScopedPropertiesHolder(properties);
 	}
 }
