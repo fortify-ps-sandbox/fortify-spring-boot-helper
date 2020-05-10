@@ -49,21 +49,21 @@ public class ModifyablePropertySourceScope implements Scope {
 	    return getScopedObjects().remove(name);
 	}
 
-	private ScopedPropertiesHolder getModifyablePropertyAttributes() {
+	private ScopedPropertiesHolder getScopedPropertiesHolder() {
 		return ModifyablePropertySource.getScopedPropertiesHolder();
 	}
 	
 	private Map<String, Object> getScopedObjects() {
-		return getModifyablePropertyAttributes().getScopedObjects();
+		return getScopedPropertiesHolder().getScopedObjects();
 	}
 	
 	private Map<String, Runnable> getDestructionCallbacks() {
-		return getModifyablePropertyAttributes().getDestructionCallbacks();
+		return getScopedPropertiesHolder().getDestructionCallbacks();
 	}
 
 	@Override
 	public void registerDestructionCallback(String name, Runnable callback) {
-		getModifyablePropertyAttributes().registerDestructionCallback(name, callback);
+		getScopedPropertiesHolder().registerDestructionCallback(name, callback);
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class ModifyablePropertySourceScope implements Scope {
 
 	@Override
 	public String getConversationId() {
-		return getModifyablePropertyAttributes().getId();
+		return getScopedPropertiesHolder().getId();
 	}
 
 	public static final class ModifyablePropertySourceScopeBeanFactoryPostProcessor implements BeanFactoryPostProcessor {

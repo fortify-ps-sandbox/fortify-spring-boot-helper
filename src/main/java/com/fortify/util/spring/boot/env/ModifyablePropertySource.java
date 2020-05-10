@@ -76,7 +76,6 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 	@Override
 	public void close() {
 		Deque<ScopedPropertiesHolder> deque = getDeque();
-		deque.getFirst().clear();
 		deque.removeFirst();
 	}
 	
