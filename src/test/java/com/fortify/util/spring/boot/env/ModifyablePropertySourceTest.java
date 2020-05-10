@@ -28,10 +28,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -46,6 +46,7 @@ import org.springframework.context.annotation.Scope;
 import com.fortify.util.spring.boot.env.ModifyablePropertySourceScope.ModifyablePropertySourceScopeBeanFactoryPostProcessor;
 
 // TODO Convert this into proper, separate unit tests
+// TODO Add tests for nested #withProperties with both null-input and non-null input
 public final class ModifyablePropertySourceTest {
 	@Test
 	public void test1() {
@@ -75,9 +76,9 @@ public final class ModifyablePropertySourceTest {
 
 		@Override
 		public void run(String... args) throws Exception {
-			test(()->ctx.getBean("testConfigSingleton", TestConfig.class), i->getInitialValue(), true);
-			test(()->ctx.getBean("testConfigPrototype", TestConfig.class), this::getValue, false);
-			test(()->ctx.getBean("testConfigModifyableProperties", TestConfig.class), this::getValue, true);
+			test(testConfigSingleton, i->getInitialValue(), true);
+			test(testConfigPrototype, this::getValue, false);
+			test(testConfigModifyableProperties, this::getValue, true);
 			for ( int i = 0 ; i < 5 ; i++ ) {
 				try (ModifyablePropertySource x = ModifyablePropertySource.withProperties(getProperties(i))) {
 					Object o = ctx.getBean("testConfigModifyablePropertiesConditional");
@@ -86,25 +87,25 @@ public final class ModifyablePropertySourceTest {
 			}
 		}
 		
-		private void test(Supplier<TestConfig> configSupplier, Function<Integer, String> expectedValueSupplier, boolean expectSame) {
-			testForLoop(configSupplier, expectedValueSupplier, expectSame);
-			testRecursive(configSupplier, expectedValueSupplier, expectSame);
+		private void test(ObjectFactory<TestConfig> configFactory, Function<Integer, String> expectedValueSupplier, boolean expectSame) {
+			testForLoop(configFactory, expectedValueSupplier, expectSame);
+			testRecursive(configFactory, expectedValueSupplier, expectSame);
 		}
 
-		private void testForLoop(Supplier<TestConfig> configSupplier, Function<Integer, String> expectedValueSupplier, boolean expectSame) {
+		private void testForLoop(ObjectFactory<TestConfig> configFactory, Function<Integer, String> expectedValueSupplier, boolean expectSame) {
 			for ( int i = 0 ; i < 5 ; i++ ) {
-				assertValue(configSupplier.get(), getInitialValue());
+				assertValue(configFactory.getObject(), getInitialValue());
 				try (ModifyablePropertySource x = ModifyablePropertySource.withProperties(getProperties(i))) {
-					assertValues(configSupplier, expectedValueSupplier, expectSame, i);
+					assertValues(configFactory, expectedValueSupplier, expectSame, i);
 				}
-				assertValue(configSupplier.get(), getInitialValue());
+				assertValue(configFactory.getObject(), getInitialValue());
 			}
 		}
 
 
-		private void assertValues(Supplier<TestConfig> configSupplier, Function<Integer, String> expectedValueSupplier, boolean expectSame, int i) {
-			TestConfig config1 = configSupplier.get();
-			TestConfig config2 = configSupplier.get();
+		private void assertValues(ObjectFactory<TestConfig> configFactory, Function<Integer, String> expectedValueSupplier, boolean expectSame, int i) {
+			TestConfig config1 = configFactory.getObject();
+			TestConfig config2 = configFactory.getObject();
 			assertValue(config1, expectedValueSupplier.apply(i));
 			assertValue(config2, expectedValueSupplier.apply(i));
 			if ( expectSame ) {
@@ -119,17 +120,17 @@ public final class ModifyablePropertySourceTest {
 			Assert.assertEquals(value, config.getValue());
 		}
 		
-		private void testRecursive(Supplier<TestConfig> configSupplier, Function<Integer, String> expectedValueSupplier, boolean expectSame) {
-			assertValue(configSupplier.get(), getInitialValue());
-			testRecursive(configSupplier, expectedValueSupplier, expectSame, 0);
-			assertValue(configSupplier.get(), getInitialValue());
+		private void testRecursive(ObjectFactory<TestConfig> configFactory, Function<Integer, String> expectedValueSupplier, boolean expectSame) {
+			assertValue(configFactory.getObject(), getInitialValue());
+			testRecursive(configFactory, expectedValueSupplier, expectSame, 0);
+			assertValue(configFactory.getObject(), getInitialValue());
 		}
 		
-		private void testRecursive(Supplier<TestConfig> configSupplier, Function<Integer, String> expectedValueSupplier, boolean expectSame, int i) {
+		private void testRecursive(ObjectFactory<TestConfig> configFactory, Function<Integer, String> expectedValueSupplier, boolean expectSame, int i) {
 			if ( i<5 ) {
 				try (ModifyablePropertySource x = ModifyablePropertySource.withProperties(getProperties(i))) {
-					assertValues(configSupplier, expectedValueSupplier, expectSame, i);
-					testRecursive(configSupplier, expectedValueSupplier, expectSame, i+1);
+					assertValues(configFactory, expectedValueSupplier, expectSame, i);
+					testRecursive(configFactory, expectedValueSupplier, expectSame, i+1);
 				}
 			}
 		}
@@ -177,6 +178,9 @@ public final class ModifyablePropertySourceTest {
 		}
 		
 		@Autowired ApplicationContext ctx;
+		@Autowired ObjectFactory<TestConfig> testConfigSingleton;
+		@Autowired ObjectFactory<TestConfig> testConfigPrototype;
+		@Autowired ObjectFactory<TestConfig> testConfigModifyableProperties;
 		
 		
 		public static class TestConfig {
