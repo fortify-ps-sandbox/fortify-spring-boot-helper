@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.util.spring.boot.env;
+package com.fortify.util.spring.boot.env.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -31,6 +31,8 @@ import java.lang.annotation.Target;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
+
+import com.fortify.util.spring.boot.env.ModifyablePropertySourceScope;
 
 @Qualifier
 @Scope(ModifyablePropertySourceScope.SCOPE_NAME)

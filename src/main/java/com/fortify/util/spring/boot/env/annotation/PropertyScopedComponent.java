@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.util.spring.boot.env;
+package com.fortify.util.spring.boot.env.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
