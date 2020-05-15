@@ -33,16 +33,20 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.StandardEnvironment;
 
 public final class ModifyablePropertySource extends EnumerablePropertySource<ThreadLocal<Deque<ScopedPropertiesHolder>>> implements AutoCloseable {
+	private static final Logger LOG = LoggerFactory.getLogger(ModifyablePropertySource.class);
 	private static final ModifyablePropertySource INSTANCE = new ModifyablePropertySource();
 	
 	public static final ConfigurableEnvironment createEnvironment() {
 		StandardEnvironment result = new StandardEnvironment();
 		result.getPropertySources().addFirst(INSTANCE);
+		LOG.trace("Created environment with modifyable property source support: {}", result);
 		return result;
 	}
 	
@@ -54,6 +58,7 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 	public String[] getPropertyNames() {
 		Deque<ScopedPropertiesHolder> deque = getDeque();
 		List<String> propertyNames = deque.stream().map(p->p.getProperties().keySet()).flatMap(Set::stream).collect(Collectors.toList());
+		LOG.trace("getPropertyNames(): {}", propertyNames);
 		return propertyNames.toArray(new String[] {});
 	}
 	
@@ -61,22 +66,27 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 	public Object getProperty(String name) {
 		Deque<ScopedPropertiesHolder> deque = getDeque();
 		// TODO Support property variations? For example also look for propertyName if input name is property-name 
-		return deque.stream()
+		Object result = deque.stream()
 				.filter(p->p.getProperties().containsKey(name))
 				.findFirst()
 				.map(p->p.getProperties().get(name)).orElse(null);
+		LOG.trace("getProperty({}): {}", name, result);
+		return result;
 	}
 
 	public static final ModifyablePropertySource withProperties(Map<String, Object> properties) {
 		Deque<ScopedPropertiesHolder> deque = INSTANCE.getDeque();
-		deque.addFirst(getScopedPropertiesHolder(properties));
+		ScopedPropertiesHolder scopedPropertiesHolder = getScopedPropertiesHolder(properties);
+		LOG.trace("Adding {} to stack for properties {}", scopedPropertiesHolder, properties);
+		deque.addFirst(scopedPropertiesHolder);
 		return INSTANCE;
 	}
 	
 	@Override
 	public void close() {
 		Deque<ScopedPropertiesHolder> deque = getDeque();
-		deque.removeFirst();
+		ScopedPropertiesHolder removedScopedPropertiesHolder = deque.removeFirst();
+		LOG.trace("Removed {} from stack", removedScopedPropertiesHolder);
 	}
 	
 	public static final <R> R withProperties(Map<String, Object> properties, Callable<R> callable) throws Exception {

@@ -33,9 +33,17 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class PopulateContainerDirs {
+	private static final Logger LOG = LoggerFactory.getLogger(PopulateContainerDirs.class);
+	
 	public static final void populateContainerDirs() throws IOException {
-		if ( "true".equals(System.getProperty("populateContainerDirs")) ) {
+		boolean populateContainerDirsEnabled = "true".equals(System.getProperty("populateContainerDirs"));
+		LOG.debug("Poplate container directories enabled: {}", populateContainerDirsEnabled);
+		if ( populateContainerDirsEnabled ) {
+			LOG.debug("Checking whether container directories need to be initialized");
 			Path sourcePath = Paths.get(System.getProperty("populateContainerDirs.sourceDir", "/default"));
 			
 			if ( Files.exists(sourcePath) ) {
@@ -56,8 +64,10 @@ public final class PopulateContainerDirs {
 	}
 
 	private static boolean isTargetNotPresentOrEmpty(Path targetPath) throws IOException {
-		return !Files.exists(targetPath) || 
+		boolean isPresent = Files.exists(targetPath) || 
 				(Files.isDirectory(targetPath) && !Files.list(targetPath).anyMatch(PopulateContainerDirs::anyButEmpty));
+		LOG.debug("Target path {} is present: {}", targetPath.toString(), isPresent);
+		return !isPresent;
 	}
 	
 	private static final boolean anyButEmpty(Path p) {
@@ -65,7 +75,7 @@ public final class PopulateContainerDirs {
 	}
 	
 	private static final void copy(Path sourcePath, Path targetPath) throws IOException {
-		System.out.println(String.format("Copying %s to %s", sourcePath.toString(), targetPath.toString()));
+		LOG.info("Copying {} to {}", sourcePath, targetPath);
 		if ( Files.isDirectory(sourcePath) ) {
 			copyFolder(sourcePath, targetPath);
 		} else {
@@ -77,16 +87,18 @@ public final class PopulateContainerDirs {
         Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
 
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-                    throws IOException {
-                Files.createDirectories(targetPath.resolve(sourcePath.relativize(dir)));
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            	Path targetDirectory = targetPath.resolve(sourcePath.relativize(dir));
+            	LOG.debug("Creating directory {}", targetDirectory);
+				Files.createDirectories(targetDirectory);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                    throws IOException {
-                Files.copy(file, targetPath.resolve(sourcePath.relativize(file)), options);
+            public FileVisitResult visitFile(Path sourceFilePath, BasicFileAttributes attrs) throws IOException {
+                Path targetFilePath = targetPath.resolve(sourcePath.relativize(sourceFilePath));
+                LOG.debug("Copying {} to {}", sourceFilePath, targetFilePath);
+				Files.copy(sourceFilePath, targetFilePath, options);
                 return FileVisitResult.CONTINUE;
             }
         });

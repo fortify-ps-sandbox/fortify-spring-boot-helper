@@ -3,6 +3,8 @@ package com.fortify.util.spring.boot.scheduler;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -16,16 +18,17 @@ import org.springframework.stereotype.Component;
 @Component
 @EnableScheduling
 public class RunOrSchedule implements CommandLineRunner {
+	private static final Logger LOG = LoggerFactory.getLogger(RunOrSchedule.class);
 	@Value("${runOnce:false}") private boolean runOnce;
 	@Autowired private TaskScheduler scheduler;
-	@Autowired private List<ISchedulableRunnerFactory> runnerFactories;
+	@Autowired(required=false) private List<ISchedulableRunnerFactory> runnerFactories;
 	@Autowired ApplicationContext context;
 
 	@Override
 	public void run(String... args) throws Exception {
 		// TODO Check if there are any enabled runner factories, throw exception otherwise
 		if ( runnerFactories==null || runnerFactories.isEmpty() ) {
-			throw new RuntimeException("No runners found");
+			throw new RuntimeException("No runner factories are available; please check the classpath");
 		} else {
 			if ( isRunOnce(runnerFactories) ) {
 				runOnce(runnerFactories);
@@ -47,7 +50,9 @@ public class RunOrSchedule implements CommandLineRunner {
 	private void runOnce(List<ISchedulableRunnerFactory> runnerFactories) {
 		for ( ISchedulableRunnerFactory runnerFactory : runnerFactories ) {
 			if ( runnerFactory.isEnabled() ) {
-				runnerFactory.getRunner().run();
+				ISchedulableRunner runner = runnerFactory.getRunner();
+				LOG.debug("Running {}", runner);
+				runner.run();
 			}
 		}
 		SpringApplication.exit(context);
@@ -56,7 +61,10 @@ public class RunOrSchedule implements CommandLineRunner {
 	private void schedule(List<ISchedulableRunnerFactory> runnerFactories) {
 		for ( ISchedulableRunnerFactory runnerFactory : runnerFactories ) {
 			if ( runnerFactory.isEnabled() && hasSchedule(runnerFactory) ) {
-				scheduler.schedule(runnerFactory.getRunner(), new CronTrigger(runnerFactory.getCronSchedule()));
+				ISchedulableRunner runner = runnerFactory.getRunner();
+				String cronSchedule = runnerFactory.getCronSchedule();
+				LOG.debug("Scheduling {} with cron schedule {}", runner, cronSchedule);
+				scheduler.schedule(runner, new CronTrigger(cronSchedule));
 			}
 		}
 	}

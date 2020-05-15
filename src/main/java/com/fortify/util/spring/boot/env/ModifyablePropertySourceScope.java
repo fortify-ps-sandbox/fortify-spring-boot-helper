@@ -26,6 +26,8 @@ package com.fortify.util.spring.boot.env;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -34,17 +36,24 @@ import org.springframework.beans.factory.config.Scope;
 
 public class ModifyablePropertySourceScope implements Scope {
 	public static final String SCOPE_NAME = "propertySource";
+	private static final Logger LOG = LoggerFactory.getLogger(ModifyablePropertySourceScope.class);
+	
 	@Override
 	public Object get(String name, ObjectFactory<?> objectFactory) {
 		Map<String, Object> scopedObjects = getScopedObjects();
 		if(!scopedObjects.containsKey(name)) {
-	        scopedObjects.put(name, objectFactory.getObject());
+	        Object newInstance = objectFactory.getObject();
+			scopedObjects.put(name, newInstance);
+	        LOG.trace("get({}): Created new scoped instance {}", name, newInstance);
 	    }
-	    return scopedObjects.get(name);
+	    Object result = scopedObjects.get(name);
+	    LOG.trace("get({}): {}", name, result);
+	    return result;
 	}
 
 	@Override
 	public Object remove(String name) {
+		LOG.trace("remove({})", name);
 		getDestructionCallbacks().remove(name);
 	    return getScopedObjects().remove(name);
 	}
@@ -79,6 +88,7 @@ public class ModifyablePropertySourceScope implements Scope {
 	public static final class ModifyablePropertySourceScopeBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 	    @Override
 	    public void postProcessBeanFactory(ConfigurableListableBeanFactory factory) throws BeansException {
+	    	LOG.trace("Registering scope {}", SCOPE_NAME);
 	        factory.registerScope(SCOPE_NAME, new ModifyablePropertySourceScope());
 	    }
 	}
