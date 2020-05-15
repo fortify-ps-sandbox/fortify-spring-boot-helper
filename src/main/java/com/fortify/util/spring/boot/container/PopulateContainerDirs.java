@@ -41,7 +41,7 @@ public final class PopulateContainerDirs {
 	
 	public static final void populateContainerDirs() throws IOException {
 		boolean populateContainerDirsEnabled = "true".equals(System.getProperty("populateContainerDirs"));
-		LOG.debug("Poplate container directories enabled: {}", populateContainerDirsEnabled);
+		LOG.debug("Populate container directories enabled: {}", populateContainerDirsEnabled);
 		if ( populateContainerDirsEnabled ) {
 			LOG.debug("Checking whether container directories need to be initialized");
 			Path sourcePath = Paths.get(System.getProperty("populateContainerDirs.sourceDir", "/default"));
