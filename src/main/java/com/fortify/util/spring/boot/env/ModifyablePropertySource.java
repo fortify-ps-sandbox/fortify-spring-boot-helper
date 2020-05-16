@@ -82,6 +82,11 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 		return INSTANCE;
 	}
 	
+	public static final String getCurrentScopeId() {
+		Deque<ScopedPropertiesHolder> deque = INSTANCE.getDeque();
+		return deque.peekFirst().getId();
+	}
+	
 	@Override
 	public void close() {
 		Deque<ScopedPropertiesHolder> deque = getDeque();
