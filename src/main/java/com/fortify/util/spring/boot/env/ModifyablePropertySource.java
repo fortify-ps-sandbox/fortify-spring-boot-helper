@@ -26,10 +26,12 @@ package com.fortify.util.spring.boot.env;
 
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -72,6 +74,12 @@ public final class ModifyablePropertySource extends EnumerablePropertySource<Thr
 				.map(p->p.getProperties().get(name)).orElse(null);
 		LOG.trace("getProperty({}): {}", name, result);
 		return result;
+	}
+	
+	public static final ModifyablePropertySource withNewScope() {
+		Map<String, Object> properties = new HashMap<>();
+		properties.put("randomUuid", UUID.randomUUID().toString());
+		return withProperties(properties);
 	}
 
 	public static final ModifyablePropertySource withProperties(Map<String, Object> properties) {
