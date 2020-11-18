@@ -2,9 +2,9 @@ plugins {
 	id 'java-library'
     id 'maven-publish'
     id 'base'
-    id 'com.jfrog.bintray' version "1.8.4"
-    id 'com.jfrog.artifactory' version "4.10.0"
-    id 'org.ajoberstar.grgit' version "4.0.0"
+    id 'com.jfrog.bintray' version "1.8.5"
+    id 'com.jfrog.artifactory' version "4.17.2"
+    id 'org.ajoberstar.grgit' version "4.0.2"
 }
 
 ext {
@@ -30,9 +30,9 @@ test {
 }
 
 dependencies {
-	api 'org.springframework.boot:spring-boot-starter-quartz:2.2.1.RELEASE'
+	api 'org.springframework.boot:spring-boot-starter-quartz:2.4.0'
 	implementation 'commons-lang:commons-lang:2.6'
-	testImplementation('org.springframework.boot:spring-boot-starter-test:2.2.1.RELEASE') {
+	testImplementation('org.springframework.boot:spring-boot-starter-test:2.4.0') {
 //		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 }
